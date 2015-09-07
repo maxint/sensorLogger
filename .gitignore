@@ -1,0 +1,9 @@
+# Andorid Eclipse Project
+.settings
+.idea
+*gen/
+*bin/
+*obj/
+*libs/armeabi*
+build.xml
+local.properties
