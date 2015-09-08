@@ -1,73 +1,166 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-  android:layout_width="fill_parent" android:layout_height="fill_parent"
-  android:orientation="vertical">
-  <LinearLayout android:layout_width="fill_parent"
-    android:layout_height="fill_parent" android:orientation="vertical">
-    <TextView android:layout_width="fill_parent" android:layout_height="wrap_content"
-      android:text="Cellbots Data Logger" android:textSize="30dip"
-      android:gravity="center_horizontal" />
-    <TextView android:layout_width="wrap_content"
-      android:layout_height="wrap_content" android:text=" " />
-    <TextView android:layout_width="fill_parent" android:layout_height="wrap_content"
-      android:text=" " android:textSize="1dip" android:background="#FFFFFFFF" />
-    <TextView android:layout_width="wrap_content"
-      android:layout_height="wrap_content" android:text=" " />
-    <Button android:id="@+id/launchLocalServer" android:layout_width="fill_parent"
-      android:layout_height="wrap_content" android:text="Local Server Controls" />
-    <TextView android:layout_width="wrap_content"
-      android:layout_height="wrap_content" android:text=" " />
-    <TextView android:layout_width="fill_parent" android:layout_height="wrap_content"
-      android:text=" " android:textSize="1dip" android:background="#FFFFFFFF" />
-    <TextView android:layout_width="wrap_content"
-      android:layout_height="wrap_content" android:text=" " />
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
 
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
 
-    <TextView android:layout_width="wrap_content"
-      android:layout_height="wrap_content" android:text="Record video"
-      android:textSize="20dip" />
-    <TextView android:layout_width="wrap_content"
-      android:layout_height="wrap_content" android:text=" " />
-    <Button android:id="@+id/launchVideoFront" android:layout_width="fill_parent"
-      android:layout_height="wrap_content" android:text="Use front camera" />
-    <TextView android:layout_width="wrap_content"
-      android:layout_height="wrap_content" android:text=" " />
-    <Button android:id="@+id/launchVideoBack" android:layout_width="fill_parent"
-      android:layout_height="wrap_content" android:text="Use back camera" />
-    <TextView android:layout_width="wrap_content"
-      android:layout_height="wrap_content" android:text=" " />
-    <TextView android:layout_width="fill_parent" android:layout_height="wrap_content"
-      android:text=" " android:textSize="1dip" android:background="#FFFFFFFF" />
-    <TextView android:layout_width="wrap_content"
-      android:layout_height="wrap_content" android:text=" " />
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:text="Cellbots Data Logger"
+            android:textSize="30sp" />
 
-    <TextView android:layout_width="wrap_content"
-      android:layout_height="wrap_content" android:text="Take pictures"
-      android:textSize="20dip" />
-    <LinearLayout android:layout_width="fill_parent"
-      android:layout_height="wrap_content" android:orientation="horizontal">
-      <TextView android:layout_width="wrap_content"
-        android:layout_height="wrap_content" android:text="Delay between shots (seconds):" />
-      <EditText android:id="@+id/pictureDelay" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" android:layout_weight="1"
-        android:inputType="number" android:text="30" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" " />
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:background="#FFFFFFFF"
+            android:text=" "
+            android:textSize="1dip" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" " />
+
+        <Button
+            android:id="@+id/launchLocalServer"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Local Server Controls" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" " />
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:background="#FFFFFFFF"
+            android:text=" "
+            android:textSize="1dip" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" " />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Record video"
+            android:textSize="20dip" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" " />
+
+        <Button
+            android:id="@+id/launchVideoFront"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Use front camera" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" " />
+
+        <Button
+            android:id="@+id/launchVideoBack"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Use back camera" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" " />
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:background="#FFFFFFFF"
+            android:text=" "
+            android:textSize="1dip" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" " />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Take pictures"
+            android:textSize="20dip" />
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Delay between shots (seconds):" />
+
+            <EditText
+                android:id="@+id/pictureDelay"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:inputType="number"
+                android:text="30" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" " />
+
+        <Button
+            android:id="@+id/launchPicture"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Use back camera" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" " />
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:background="#FFFFFFFF"
+            android:text=" "
+            android:textSize="1dip" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" " />
+
+        <CheckBox
+            android:id="@+id/useZip"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="Zip and split data into 50MB chunks." >
+        </CheckBox>
     </LinearLayout>
-    <TextView android:layout_width="wrap_content"
-      android:layout_height="wrap_content" android:text=" " />
-    <Button android:id="@+id/launchPicture" android:layout_width="fill_parent"
-      android:layout_height="wrap_content" android:text="Use back camera" />
 
-    <TextView android:layout_width="wrap_content"
-      android:layout_height="wrap_content" android:text=" " />
-    <TextView android:layout_width="fill_parent" android:layout_height="wrap_content"
-      android:text=" " android:textSize="1dip" android:background="#FFFFFFFF" />
-    <TextView android:layout_width="wrap_content"
-      android:layout_height="wrap_content" android:text=" " />
-    <CheckBox android:layout_width="fill_parent" android:layout_height="wrap_content"
-      android:checked="true" android:id="@+id/useZip" android:text="Zip and split data into 50MB chunks."></CheckBox>
-
-  </LinearLayout>
 </ScrollView>
-
-

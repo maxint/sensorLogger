@@ -27,7 +27,7 @@ public class LoggerApplication extends Application {
     /**
      * A date value is used as a unique identifier for file paths.
      */
-    private String filePathUniqueIdentifier;
+    private String mFilePathUniqueIdentifier;
 
     @Override
     public void onCreate() {
@@ -40,11 +40,11 @@ public class LoggerApplication extends Application {
         SimpleDateFormat sdf = new SimpleDateFormat();
         sdf.setTimeZone(new SimpleTimeZone(0, "GMT"));
         sdf.applyPattern("dd MMM yyyy HH:mm:ss z");
-        filePathUniqueIdentifier = sdf.format(date).replaceAll(" ", "_").replaceAll(":", "-");
+        mFilePathUniqueIdentifier = sdf.format(date).replaceAll(" ", "_").replaceAll(":", "-");
     }
 
     public void resetFilePathUniqueIdentifier() {
-        filePathUniqueIdentifier = null;
+        mFilePathUniqueIdentifier = null;
     }
 
     /**
@@ -54,11 +54,10 @@ public class LoggerApplication extends Application {
      *        initialized.
      */
     public String getFilePathUniqueIdentifier() {
-        if (filePathUniqueIdentifier == null) {
-            throw new IllegalStateException(
-                    "filePathUniqueIdentifier has not been initialized for the app.");
+        if (mFilePathUniqueIdentifier == null) {
+            throw new IllegalStateException("filePathUniqueIdentifier has not been initialized for the app.");
         }
-        return filePathUniqueIdentifier;
+        return mFilePathUniqueIdentifier;
     }
 
     public String getLoggerPathPrefix() {
@@ -72,12 +71,12 @@ public class LoggerApplication extends Application {
 
     public String getVideoFilepath() {
         return Environment.getExternalStorageDirectory().getAbsolutePath()
-                + "/SmartphoneLoggerData/" + filePathUniqueIdentifier + "/video-"
-                + filePathUniqueIdentifier + ".mp4";
+                + "/SmartphoneLoggerData/" + mFilePathUniqueIdentifier + "/video-"
+                + mFilePathUniqueIdentifier + ".mp4";
     }
 
     public String getPicturesDirectoryPath() {
         return Environment.getExternalStorageDirectory() + "/SmartphoneLoggerData/"
-                + filePathUniqueIdentifier + "/pictures/";
+                + mFilePathUniqueIdentifier + "/pictures/";
     }
 }

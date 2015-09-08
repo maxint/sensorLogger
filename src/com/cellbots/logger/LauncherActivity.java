@@ -36,75 +36,76 @@ import com.cellbots.logger.localServer.ServerControlActivity;
  * @author clchen@google.com (Charles L. Chen)
  */
 public class LauncherActivity extends Activity {
-    private CheckBox useZipCheckbox;
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.main);
 
-        useZipCheckbox = (CheckBox) findViewById(R.id.useZip);
+		final CheckBox useZipCheckbox = (CheckBox) findViewById(R.id.useZip);
+		
+		Button launchLocalServerButton = (Button) findViewById(R.id.launchLocalServer);
+		launchLocalServerButton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Intent intent = new Intent(LauncherActivity.this, ServerControlActivity.class);
+				startActivity(intent);
+				finish();
+			}
+		});
+		
+		Button launchVideoFrontButton = (Button) findViewById(R.id.launchVideoFront);
+		launchVideoFrontButton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				launchLoggingActivity(LoggerActivity.MODE_VIDEO_FRONT, useZipCheckbox.isChecked());
+			}
+		});
+		
+		Button launchVideoBackButton = (Button) findViewById(R.id.launchVideoBack);
+		launchVideoBackButton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				launchLoggingActivity(LoggerActivity.MODE_VIDEO_BACK, useZipCheckbox.isChecked());
+			}
+		});
+		
+		final EditText pictureDelayEditText = (EditText) findViewById(R.id.pictureDelay);
+		Button launchPictureButton = (Button) findViewById(R.id.launchPicture);
+		launchPictureButton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Intent intent = new Intent(LauncherActivity.this, LoggerActivity.class);
+				intent.putExtra(LoggerActivity.EXTRA_MODE, LoggerActivity.MODE_PICTURES);
+				intent.putExtra(LoggerActivity.EXTRA_USE_ZIP, useZipCheckbox.isChecked());
+				int delay = 30;
+				try {
+					delay = Integer.parseInt(pictureDelayEditText.getText().toString());
+				} catch (Exception e) {
+					Toast.makeText(LauncherActivity.this, "Error parsing picture delay time. Using default delay of 30 seconds.",
+							Toast.LENGTH_LONG).show();
+				}
+				intent.putExtra(LoggerActivity.EXTRA_PICTURE_DELAY, delay);
+				startActivity(intent);
+				finish();
+			}
+		});
+		
+		// The code we are using for taking video through the front camera
+		// relies on APIs added in SDK 9. Don't offer the front video option to
+		// users on devices older than that OR to devices who have only one
+		// camera. Currently assume that if only one camera is present, it is
+		// the back camera.
+		if (Build.VERSION.SDK_INT < 9 || Camera.getNumberOfCameras() == 1) {
+			launchVideoFrontButton.setVisibility(View.GONE);
+		}
+	}
 
-        final Activity self = this;
-        Button launchLocalServerButton = (Button) findViewById(R.id.launchLocalServer);
-        launchLocalServerButton.setOnClickListener(new OnClickListener() {
-                @Override
-            public void onClick(View v) {
-                Intent i = new Intent(LauncherActivity.this, ServerControlActivity.class);
-                startActivity(i);
-                finish();
-            }
-        });
-        Button launchVideoFrontButton = (Button) findViewById(R.id.launchVideoFront);
-        launchVideoFrontButton.setOnClickListener(new OnClickListener() {
-                @Override
-            public void onClick(View v) {
-                launchLoggingActivity(LoggerActivity.MODE_VIDEO_FRONT, useZipCheckbox.isChecked());
-            }
-        });
-        Button launchVideoBackButton = (Button) findViewById(R.id.launchVideoBack);
-        launchVideoBackButton.setOnClickListener(new OnClickListener() {
-                @Override
-            public void onClick(View v) {
-                launchLoggingActivity(LoggerActivity.MODE_VIDEO_BACK, useZipCheckbox.isChecked());
-            }
-        });
-        final EditText pictureDelayEditText = (EditText) findViewById(R.id.pictureDelay);
-        Button launchPictureButton = (Button) findViewById(R.id.launchPicture);
-        launchPictureButton.setOnClickListener(new OnClickListener() {
-                @Override
-            public void onClick(View v) {
-                Intent i = new Intent(self, LoggerActivity.class);
-                i.putExtra(LoggerActivity.EXTRA_MODE, LoggerActivity.MODE_PICTURES);
-                i.putExtra(LoggerActivity.EXTRA_USE_ZIP, useZipCheckbox.isChecked());
-                int delay = 30;
-                try {
-                    delay = Integer.parseInt(pictureDelayEditText.getText().toString());
-                } catch (Exception e) {
-                    Toast.makeText(self,
-                            "Error parsing picture delay time. Using default delay of 30 seconds.",
-                            Toast.LENGTH_LONG).show();
-                }
-                i.putExtra(LoggerActivity.EXTRA_PICTURE_DELAY, delay);
-                startActivity(i);
-                finish();
-            }
-        });
-        // The code we are using for taking video through the front camera
-        // relies on APIs added in SDK 9. Don't offer the front video option to
-        // users on devices older than that OR to devices who have only one
-        // camera. Currently assume that if only one camera is present, it is
-        // the back camera.
-        if (Build.VERSION.SDK_INT < 9 || Camera.getNumberOfCameras() == 1) {
-            launchVideoFrontButton.setVisibility(View.GONE);
-        }
-    }
-
-    private void launchLoggingActivity(int mode, boolean useZip) {
-        Intent i = new Intent(LauncherActivity.this, LoggerActivity.class);
-        i.putExtra(LoggerActivity.EXTRA_MODE, mode);
-        i.putExtra(LoggerActivity.EXTRA_USE_ZIP, useZip);
-        startActivity(i);
-        finish();
-    }
+	private void launchLoggingActivity(int mode, boolean useZip) {
+		Intent intent = new Intent(LauncherActivity.this, LoggerActivity.class);
+		intent.putExtra(LoggerActivity.EXTRA_MODE, mode);
+		intent.putExtra(LoggerActivity.EXTRA_USE_ZIP, useZip);
+		startActivity(intent);
+		finish();
+	}
 }
