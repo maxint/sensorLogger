@@ -65,7 +65,13 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 		mCamera = Camera.open(mCameraID);
 		try {
 			mCamera.setPreviewDisplay(holder);
-			mCamera.setDisplayOrientation(CAMERA_ORIENTATION_DEGREES);
+            if (mCameraID == CameraInfo.CAMERA_FACING_BACK) {
+                Camera.Parameters params = mCamera.getParameters();
+                params.setFocusMode(Camera.Parameters.FOCUS_MODE_INFINITY);
+                params.setPreviewSize(640, 480);
+                mCamera.setParameters(params);
+            }
+            mCamera.setDisplayOrientation(CAMERA_ORIENTATION_DEGREES);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
