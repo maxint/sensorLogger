@@ -23,6 +23,7 @@ import android.util.Log;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.SimpleTimeZone;
 
 public class LoggerApplication extends Application {
@@ -39,9 +40,8 @@ public class LoggerApplication extends Application {
 
     public void generateNewFilePathUniqueIdentifier() {
         Date date = new Date();
-        SimpleDateFormat sdf = new SimpleDateFormat();
+        SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy HH:mm:ss z", Locale.ENGLISH);
         sdf.setTimeZone(new SimpleTimeZone(0, "GMT"));
-        sdf.applyPattern("dd MMM yyyy HH:mm:ss z");
         mFilePathUniqueIdentifier = sdf.format(date).replaceAll(" ", "_").replaceAll(":", "-");
     }
 
@@ -59,7 +59,7 @@ public class LoggerApplication extends Application {
     }
 
     public String generateDataFilePath(String prefix) {
-        return getDataLoggerPath() + "/" + prefix.replaceAll(" ", "_") + "_" + getFilePathUniqueIdentifier() + ".txt";
+        return getDataLoggerPath() + "/" + prefix.replaceAll(" ", "_") + ".txt";
     }
 
     public String getLoggerPathPrefix() {
@@ -77,7 +77,7 @@ public class LoggerApplication extends Application {
     }
 
     public String getVideoFilepath() {
-        return getLoggerPathPrefix() + "/video-" + mFilePathUniqueIdentifier + ".mp4";
+        return getLoggerPathPrefix() + "/video.mp4";
     }
 
     public String getPicturesDirectoryPath() {
