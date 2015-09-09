@@ -24,6 +24,6 @@
     <include layout="@layout/rec_header" />
     <include layout="@layout/backdrop" />
     <include layout="@layout/control_panel_data" />
-    <include layout="@layout/control_panel_rec" /> 
+    <include layout="@layout/control_panel_rec" />
 
 </FrameLayout>

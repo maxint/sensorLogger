@@ -169,7 +169,6 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 				mOutputStream.close();
 				mOutputStream = null;
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -209,6 +208,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 							} catch (IOException e) {
 								e.printStackTrace();
 							} finally {
+                                mCamera.startPreview();
 								runPictureTakingLoop();
 							}
 						}

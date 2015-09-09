@@ -42,19 +42,18 @@ public class LauncherActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 
-		final CheckBox useZipCheckbox = (CheckBox) findViewById(R.id.useZip);
-		
-		Button launchLocalServerButton = (Button) findViewById(R.id.launchLocalServer);
+		final Button launchLocalServerButton = (Button) findViewById(R.id.launchLocalServer);
 		launchLocalServerButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				Intent intent = new Intent(LauncherActivity.this, ServerControlActivity.class);
-				startActivity(intent);
-				finish();
+				Intent i = new Intent(LauncherActivity.this, ServerControlActivity.class);
+				startActivity(i);
 			}
 		});
+
+        final CheckBox useZipCheckbox = (CheckBox) findViewById(R.id.useZip);
 		
-		Button launchVideoFrontButton = (Button) findViewById(R.id.launchVideoFront);
+		final Button launchVideoFrontButton = (Button) findViewById(R.id.launchVideoFront);
 		launchVideoFrontButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -62,32 +61,19 @@ public class LauncherActivity extends Activity {
 			}
 		});
 		
-		Button launchVideoBackButton = (Button) findViewById(R.id.launchVideoBack);
+		final Button launchVideoBackButton = (Button) findViewById(R.id.launchVideoBack);
 		launchVideoBackButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				launchLoggingActivity(LoggerActivity.MODE_VIDEO_BACK, useZipCheckbox.isChecked());
 			}
 		});
-		
-		final EditText pictureDelayEditText = (EditText) findViewById(R.id.pictureDelay);
-		Button launchPictureButton = (Button) findViewById(R.id.launchPicture);
+
+		final Button launchPictureButton = (Button) findViewById(R.id.launchPicture);
 		launchPictureButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				Intent intent = new Intent(LauncherActivity.this, LoggerActivity.class);
-				intent.putExtra(LoggerActivity.EXTRA_MODE, LoggerActivity.MODE_PICTURES);
-				intent.putExtra(LoggerActivity.EXTRA_USE_ZIP, useZipCheckbox.isChecked());
-				int delay = 30;
-				try {
-					delay = Integer.parseInt(pictureDelayEditText.getText().toString());
-				} catch (Exception e) {
-					Toast.makeText(LauncherActivity.this, "Error parsing picture delay time. Using default delay of 30 seconds.",
-							Toast.LENGTH_LONG).show();
-				}
-				intent.putExtra(LoggerActivity.EXTRA_PICTURE_DELAY, delay);
-				startActivity(intent);
-				finish();
+                launchLoggingActivity(LoggerActivity.MODE_PICTURES, useZipCheckbox.isChecked());
 			}
 		});
 		
@@ -102,10 +88,21 @@ public class LauncherActivity extends Activity {
 	}
 
 	private void launchLoggingActivity(int mode, boolean useZip) {
-		Intent intent = new Intent(LauncherActivity.this, LoggerActivity.class);
-		intent.putExtra(LoggerActivity.EXTRA_MODE, mode);
-		intent.putExtra(LoggerActivity.EXTRA_USE_ZIP, useZip);
-		startActivity(intent);
-		finish();
+		Intent i = new Intent(LauncherActivity.this, LoggerActivity.class);
+		i.putExtra(LoggerActivity.EXTRA_MODE, mode);
+		i.putExtra(LoggerActivity.EXTRA_USE_ZIP, useZip);
+        if (mode == LoggerActivity.MODE_PICTURES) {
+            int delay = 30;
+            try {
+                final EditText pictureDelayEditText = (EditText) findViewById(R.id.pictureDelay);
+                delay = Integer.parseInt(pictureDelayEditText.getText().toString());
+            } catch (Exception e) {
+                Toast.makeText(LauncherActivity.this,
+                        "Error parsing picture delay time. Using default delay of 30 seconds.",
+                        Toast.LENGTH_LONG).show();
+            }
+            i.putExtra(LoggerActivity.EXTRA_PICTURE_DELAY, delay);
+        }
+		startActivity(i);
 	}
 }

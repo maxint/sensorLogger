@@ -64,7 +64,7 @@ import android.widget.Toast;
 
 /**
  * Main activity for a data gathering tool. This tool enables recording video
- * and collecting data from sensors. Data is stored in:
+ * and collecting data from mSensors. Data is stored in:
  * /sdcard/SmartphoneLoggerData/.
  *
  * @author clchen@google.com (Charles L. Chen)
@@ -97,7 +97,7 @@ public class LoggerActivity extends Activity {
 	private int mMode;
 	private volatile Boolean mIsRecording;
 	private boolean mUseZip;
-	private long startRecTime = 0;
+	private long mStartRecTime = 0;
 	private long mDelay = 0;
 	private LoggerApplication mApp;
 
@@ -132,7 +132,7 @@ public class LoggerActivity extends Activity {
 	/*
 	 * Sensors
 	 */
-	private List<Sensor> sensors;
+	private List<Sensor> mSensors;
 	private SensorManager mSensorManager;
 	private int mBatteryTemp = 0;
 	private BufferedWriter mBatteryTempWriter;
@@ -303,10 +303,12 @@ public class LoggerActivity extends Activity {
 			synchronized (mIsRecording) {
 				isRecording = mIsRecording;
 			}
-			if (isRecording) {
-				mRecordInfo.setVisibility(View.VISIBLE);
-				mRecordInfo.setVisibility(View.VISIBLE);
-			}
+			runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					mRecordInfo.setVisibility(View.VISIBLE);
+				}
+			});
 			while (isRecording) {
 				mStatFs = new StatFs(Environment.getExternalStorageDirectory().toString());
 				final float percentage = (float) (mStatFs.getBlockCount() - mStatFs.getAvailableBlocks())
@@ -324,7 +326,7 @@ public class LoggerActivity extends Activity {
 						if (mMode == MODE_PICTURES)
 							mRecordInfo.setText("Pictures taken: " + mCameraView.getPictureCount());
 						else
-							mRecordInfo.setText(DateUtils.formatElapsedTime((System.currentTimeMillis() - startRecTime) / 1000));
+							mRecordInfo.setText(DateUtils.formatElapsedTime((System.currentTimeMillis() - mStartRecTime) / 1000));
 
 						mStorageBarImageView.setPercentage(percentage);
 						mStorageTextView = (TextView) findViewById(R.id.storage_text);
@@ -344,7 +346,6 @@ public class LoggerActivity extends Activity {
 			}
 
 			runOnUiThread(new Runnable() {
-
 				@Override
 				public void run() {
 					mFlashingRecGroup.setVisibility(View.INVISIBLE);
@@ -408,38 +409,13 @@ public class LoggerActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				synchronized (mIsRecording) {
-					if (!mIsRecording) {
-						mIsRecording = true;
-						recordButton.setImageResource(R.drawable.rec_button_pressed);
-						if ((mMode == MODE_VIDEO_FRONT) || (mMode == MODE_VIDEO_BACK)) {
-							try {
-								mCameraView.recordVideo();
-								startRecTime = System.currentTimeMillis();
-								new Thread(updateRecTimeDisplay).start();
-								if (mRemoteControl != null)
-									mRemoteControl.broadcastMessage("*** Recording Started ***\n");
-							} catch (Exception e) {
-								Log.e("ls", "Recording has failed...", e);
-								Toast.makeText(getApplicationContext(),
-										"Camera hardware error. Please restart the application.", Toast.LENGTH_LONG)
-										.show();
-								finish();
-								return;
-							}
-						} else {
-							try {
-								mCameraView.takePictures(mDelay);
-								new Thread(updateRecTimeDisplay).start();
-							} catch (Exception e) {
-								Log.e("ls", "Taking pictures has failed...", e);
-								Toast.makeText(getApplicationContext(),
-										"Taking pictures is not possible at the moment: " + e.toString(),
-										Toast.LENGTH_SHORT).show();
-							}
-						}
+					if (mIsRecording) {
+                        recordButton.setImageResource(R.drawable.rec_button_up);
+                        stopRecording();
 					} else {
-						cleanup();
-					}
+                        recordButton.setImageResource(R.drawable.rec_button_pressed);
+                        startRecording();
+                    }
 				}
 			}
 		});
@@ -476,7 +452,7 @@ public class LoggerActivity extends Activity {
 		initSensorUi();
 	}
 
-	@Override
+    @Override
 	protected void onResume() {
 		Log.i(TAG, "onResume");
 
@@ -485,12 +461,11 @@ public class LoggerActivity extends Activity {
 		setupSensors();
 
 		NetworkHelper.startConfiguration(getApplicationContext());
-		mRemoteControl = new RemoteControl(getApplicationContext());
 
+		mRemoteControl = new RemoteControl(getApplicationContext());
 		mRemoteControl.registerCommandListener("start", mCommandListener);
 		mRemoteControl.registerCommandListener("stop", mCommandListener);
 		mRemoteControl.registerCommandListener("status", mCommandListener);
-
 		mRemoteControl.start();
 	}
 
@@ -501,7 +476,7 @@ public class LoggerActivity extends Activity {
 		super.onPause();
 
 		// Unregister sensor listeners
-		for (Sensor s : sensors) {
+		for (Sensor s : mSensors) {
 			mSensorManager.unregisterListener(mSensorEventListener, s);
 		}
 
@@ -564,9 +539,7 @@ public class LoggerActivity extends Activity {
 				progressDialog.setProgress(done);
 				progressDialog.setMessage(status);
 
-				if (mRemoteControl != null) {
-					mRemoteControl.broadcastMessage("Zipping Progress: " + done + "%\n");
-				}
+				mRemoteControl.broadcastMessage("Zipping Progress: " + done + "%\n");
 			}
 		};
 
@@ -598,8 +571,7 @@ public class LoggerActivity extends Activity {
 				initSensorLogFiles();
 
 				try {
-					if (mRemoteControl != null)
-						mRemoteControl.broadcastMessage("*** Packaging Finished: OK to start ***\n");
+                    mRemoteControl.broadcastMessage("*** Packaging Finished: OK to start ***\n");
 				} catch (RuntimeException e) {
 					e.printStackTrace();
 					runOnUiThread(new Runnable() {
@@ -620,15 +592,9 @@ public class LoggerActivity extends Activity {
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if (keyCode == KeyEvent.KEYCODE_BACK) {
-			boolean shouldExitApp;
 			synchronized (mIsRecording) {
-				shouldExitApp = !mIsRecording;
+                return true;
 			}
-			// cleanup();
-			if (shouldExitApp) {
-				finish();
-			}
-			return true;
 		}
 		return super.onKeyDown(keyCode, event);
 	}
@@ -636,7 +602,7 @@ public class LoggerActivity extends Activity {
 	private void setupSensors() {
 		// initSensorUi();
 		mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-		sensors = mSensorManager.getSensorList(Sensor.TYPE_ALL);
+		mSensors = mSensorManager.getSensorList(Sensor.TYPE_ALL);
 		initSensorLogFiles();
 		// initBattery(); // *Note* This function deals with UI, not actual
 		// readings.
@@ -677,8 +643,8 @@ public class LoggerActivity extends Activity {
 			}
 		}
 
-		for (int i = 0; i < sensors.size(); i++) {
-			Sensor s = sensors.get(i);
+		for (int i = 0; i < mSensors.size(); i++) {
+			Sensor s = mSensors.get(i);
 			String sensorFilename = directoryName + s.getName().replaceAll(" ", "_") + "_"
 					+ mApp.getFilePathUniqueIdentifier() + ".txt";
 			File file = new File(sensorFilename);
@@ -777,7 +743,6 @@ public class LoggerActivity extends Activity {
 		xTextView.setText(prefix + numberDisplayFormatter(values[0]));
 		yTextView.setText(prefix + numberDisplayFormatter(values[1]));
 		zTextView.setText(prefix + numberDisplayFormatter(values[2]));
-
 	}
 
 	private void initGps() {
@@ -841,7 +806,7 @@ public class LoggerActivity extends Activity {
 		// reading.
 		//
 		// Note that we are reading the current time in MILLISECONDS for this,
-		// as opposed to NANOSECONDS for regular sensors.
+		// as opposed to NANOSECONDS for regular mSensors.
 		mBatteryTempBarImageView = (BarImageView) findViewById(R.id.temperature_barImageView);
 		mBatteryTempTextView = (TextView) findViewById(R.id.batteryTemp_text);
 		mBatteryTempSpacerTextView = (TextView) findViewById(R.id.batteryTemp_text_spacer);
@@ -859,7 +824,7 @@ public class LoggerActivity extends Activity {
 	}
 
 	/**
-	 * Prints all the sensors to LogCat.
+	 * Prints all the mSensors to LogCat.
 	 */
 	private void printSensors() {
 		List<Sensor> sensors = mSensorManager.getSensorList(Sensor.TYPE_ALL);
@@ -918,36 +883,49 @@ public class LoggerActivity extends Activity {
 		return displayedText;
 	}
 
+    private void startRecording() {
+        mIsRecording = true;
+        mStartRecTime = System.currentTimeMillis();
+        new Thread(updateRecTimeDisplay).start();
+        if ((mMode == MODE_VIDEO_FRONT) || (mMode == MODE_VIDEO_BACK)) {
+            try {
+                mCameraView.recordVideo();
+                mRemoteControl.broadcastMessage("*** Recording Started ***\n");
+            } catch (Exception e) {
+                Log.e(TAG, "Recording has failed...", e);
+                Toast.makeText(getApplicationContext(),
+                        "Camera hardware error. Please restart the application.", Toast.LENGTH_LONG)
+                        .show();
+                finish();
+            }
+        } else {
+            try {
+                mCameraView.takePictures(mDelay);
+            } catch (Exception e) {
+                Log.e(TAG, "Taking pictures has failed...", e);
+                Toast.makeText(getApplicationContext(),
+                        "Taking pictures is not possible at the moment: " + e.toString(),
+                        Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+	private void stopRecording() {
+        mIsRecording = false;
+        mGpsManager.shutdown();
+        mCameraView.stopRecording();
+        mStartRecTime = 0;
+        closeFiles();
+        mRemoteControl.broadcastMessage("*** Recording Stopped ***\n");
+	}
+
 	private void cleanup() {
-		boolean wasRecording = false;
-		try {
-			mGpsManager.shutdown();
-			synchronized (mIsRecording) {
-				wasRecording = mIsRecording;
-				if (!mIsRecording) {
-					cleanupEmptyFiles();
-				}
-				if (mIsRecording) {
-					mCameraView.stopRecording();
-				}
-				mCameraView.release();
-				mIsRecording = false;
-			}
-			startRecTime = 0;
-			((ImageButton) findViewById(R.id.button_record)).setImageResource(R.drawable.rec_button_up);
-			if (mRecordInfo != null) {
-				mRecordInfo.setText(R.string.start_rec_time);
-			}
-		} catch (RuntimeException e) {
-			e.printStackTrace();
-		} finally {
-			closeFiles();
-			if (wasRecording) {
-				if (mRemoteControl != null)
-					mRemoteControl.broadcastMessage("*** Recording Stopped ***\n");
-				showDialog(PROGRESS_ID);
-			}
-		}
+        synchronized (mIsRecording) {
+            if (mIsRecording)
+                stopRecording();
+        }
+		cleanupEmptyFiles();
+		mCameraView.release();
 	}
 
 	private void cleanupEmptyFiles() {
