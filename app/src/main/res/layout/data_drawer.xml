@@ -6,15 +6,14 @@
 
     <View
         android:layout_width="wrap_content"
-        android:layout_height="10dip"
-        android:layout_weight="320"
+        android:layout_height="0dip"
+        android:layout_weight="1"
         android:background="#00FF0000" />
 
     <SlidingDrawer
         android:id="@+id/dataDrawer"
         android:layout_width="wrap_content"
-        android:layout_height="10dip"
-        android:layout_weight="685"
+        android:layout_height="385dip"
         android:background="#0000FF00"
         android:content="@+id/dataContentLayout"
         android:handle="@+id/dataHandleButton"
@@ -39,24 +38,9 @@
                 android:layout_height="287dip"
                 android:background="@drawable/data_hud_bg_empty"
                 android:orientation="vertical"
-                android:paddingLeft="12dip"
-                android:paddingTop="6dip" >
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Data"
-                    android:textColor="#FFFFFFFF"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:visibility="gone" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text=""
-                    android:textSize="37sp"
-                    android:textStyle="bold" />
+                android:gravity="left"
+                android:paddingLeft="14dip"
+                android:paddingTop="56sp" >
 
                 <!-- Accelerometer -->
 
@@ -64,35 +48,27 @@
                     android:id="@+id/accelerometerX_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="  NaN"
+                    android:text="@string/NaN"
                     android:textColor="#FFFFFFFF"
-                    android:textSize="11sp"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/accelerometerY_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:paddingTop="1dip"
-                    android:text="  NaN"
+                    android:text="@string/NaN"
                     android:textColor="#FFFFFFFF"
-                    android:textSize="11sp"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/accelerometerZ_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="  NaN"
+                    android:text="@string/NaN"
                     android:textColor="#FFFFFFFF"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text=""
-                    android:textSize="25sp"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
 
                 <!-- Gyro -->
@@ -101,34 +77,28 @@
                     android:id="@+id/gyroX_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="  NaN"
+                    android:paddingTop="34sp"
+                    android:text="@string/NaN"
                     android:textColor="#FFFFFFFF"
-                    android:textSize="11sp"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/gyroY_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="  NaN"
+                    android:text="@string/NaN"
                     android:textColor="#FFFFFFFF"
-                    android:textSize="11sp"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/gyroZ_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="  NaN"
+                    android:text="@string/NaN"
                     android:textColor="#FFFFFFFF"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text=""
-                    android:textSize="25sp"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
 
                 <!-- Magnetic Field -->
@@ -137,32 +107,34 @@
                     android:id="@+id/magneticFieldX_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="  NaN"
+                    android:paddingTop="34sp"
+                    android:text="@string/NaN"
                     android:textColor="#FFFFFFFF"
-                    android:textSize="11sp"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/magneticFieldY_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="  NaN"
+                    android:text="@string/NaN"
                     android:textColor="#FFFFFFFF"
-                    android:textSize="11sp"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/magneticFieldZ_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="  NaN"
+                    android:text="@string/NaN"
                     android:textColor="#FFFFFFFF"
-                    android:textSize="11sp"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
+
             </LinearLayout>
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="0dip"
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
         </LinearLayout>

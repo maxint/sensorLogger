@@ -129,25 +129,28 @@ public class LoggerActivity extends Activity {
 	private TextView mRecordInfo;
 	private TextView mGpsLocationView;
 
-	/*
+	/**
 	 * Sensors
 	 */
-	private List<Sensor> mSensors;
 	private SensorManager mSensorManager;
-	private int mBatteryTemp = 0;
+    private List<Sensor> mSensors;
+    private StatFs mStatFs;
+    private int mFreeSpacePct;
+    private GpsManager mGpsManager;
+    private WapManager mWapManager;
+    private RemoteControl mRemoteControl;
+
+    /**
+     * Sensor writers
+     */
 	private BufferedWriter mBatteryTempWriter;
 	private BufferedWriter mBatteryLevelWriter;
 	private BufferedWriter mBatteryVoltageWriter;
 	private BufferedWriter mWifiWriter;
-	private HashMap<String, BufferedWriter> sensorLogFileWriters;
-	private StatFs mStatFs;
-	private int mFreeSpacePct;
-	private BufferedWriter mGpsLocationWriter;
-	private BufferedWriter mGpsStatusWriter;
-	private BufferedWriter mGpsNmeaWriter;
-	private GpsManager mGpsManager;
-	private WapManager mWapManager;
-	private RemoteControl mRemoteControl;
+    private BufferedWriter mGpsLocationWriter;
+    private BufferedWriter mGpsStatusWriter;
+    private BufferedWriter mGpsNmeaWriter;
+    private HashMap<String, BufferedWriter> mSensorLogFileWriters;
 
 	/*
 	 * Event handlers
@@ -156,31 +159,26 @@ public class LoggerActivity extends Activity {
 		@Override
 		public void onSensorChanged(SensorEvent event) {
 			Sensor sensor = event.sensor;
-			if (sensor.getType() == Sensor.TYPE_GYROSCOPE) {
-				// Gyroscope doesn't really have a notion of accuracy.
-				// Due to a bug in Android, the gyroscope incorrectly returns
-				// its status as unreliable. This can be safely ignored and does
-				// not impact the accuracy of the readings.
-				event.accuracy = SensorManager.SENSOR_STATUS_ACCURACY_HIGH;
-			}
 			updateSensorUi(sensor.getType(), event.accuracy, event.values);
 			synchronized (mIsRecording) {
-				if (mIsRecording) {
-					String valuesStr = "";
-					for (int i = 0; i < event.values.length; i++) {
-						valuesStr = valuesStr + event.values[i] + ",";
-					}
-					BufferedWriter writer = sensorLogFileWriters.get(sensor.getName());
-					try {
-						writer.write(event.timestamp + "," + event.accuracy + "," + valuesStr + "\n");
-						writer.flush();
-					} catch (IOException e) {
-						e.printStackTrace();
-					} catch (NullPointerException e) {
-						e.printStackTrace();
-					}
-				}
+				if (!mIsRecording) {
+                    return;
+                }
 			}
+
+            String valuesStr = "";
+            for (int i = 0; i < event.values.length; i++) {
+                valuesStr += event.values[i] + ",";
+            }
+            BufferedWriter writer = mSensorLogFileWriters.get(sensor.getName());
+            try {
+                writer.write(event.timestamp + "," + event.accuracy + "," + valuesStr + "\n");
+                writer.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+            }
 		}
 
 		@Override
@@ -192,41 +190,41 @@ public class LoggerActivity extends Activity {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			// Display and log the temperature
-			mBatteryTemp = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0);
-			float percentage = mBatteryTemp / TEMPERATURE_MAX;
+			int batteryTemp = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0);
+			float percentage = batteryTemp / TEMPERATURE_MAX;
 
 			mBatteryTempBarImageView.setPercentage(percentage);
 			int paddingTop = (int) ((1.0 - percentage) * UI_BAR_MAX_TOP_PADDING);
-			mBatteryTempTextView.setText((mBatteryTemp / 10) + "°C");
+			mBatteryTempTextView.setText((batteryTemp / 10) + "°C");
 			mBatteryTempSpacerTextView.setPadding(mBatteryTempSpacerTextView.getPaddingLeft(), paddingTop,
 					mBatteryTempSpacerTextView.getPaddingRight(), mBatteryTempSpacerTextView.getPaddingBottom());
 
 			synchronized (mIsRecording) {
 				if (!mIsRecording)
 					return;
-
-				try {
-					mBatteryTempWriter.write(System.currentTimeMillis() + "," + mBatteryTemp + "\n");
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-
-				// Log the battery level
-				int batteryLevel = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
-				try {
-					mBatteryLevelWriter.write(System.currentTimeMillis() + "," + batteryLevel + "\n");
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-
-				// Log the battery voltage level
-				int batteryVoltage = intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE, 0);
-				try {
-					mBatteryVoltageWriter.write(System.currentTimeMillis() + "," + batteryVoltage + "\n");
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
 			}
+
+            try {
+                mBatteryTempWriter.write(System.currentTimeMillis() + "," + batteryTemp + "\n");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            // Log the battery level
+            int batteryLevel = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
+            try {
+                mBatteryLevelWriter.write(System.currentTimeMillis() + "," + batteryLevel + "\n");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            // Log the battery voltage level
+            int batteryVoltage = intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE, 0);
+            try {
+                mBatteryVoltageWriter.write(System.currentTimeMillis() + "," + batteryVoltage + "\n");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 		}
 	};
 
@@ -299,17 +297,14 @@ public class LoggerActivity extends Activity {
 
 		@Override
 		public void run() {
-			boolean isRecording;
-			synchronized (mIsRecording) {
-				isRecording = mIsRecording;
-			}
 			runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
 					mRecordInfo.setVisibility(View.VISIBLE);
 				}
 			});
-			while (isRecording) {
+
+			while (true) {
 				mStatFs = new StatFs(Environment.getExternalStorageDirectory().toString());
 				final float percentage = (float) (mStatFs.getBlockCount() - mStatFs.getAvailableBlocks())
 						/ (float) mStatFs.getBlockCount();
@@ -341,7 +336,8 @@ public class LoggerActivity extends Activity {
 					e.printStackTrace();
 				}
 				synchronized (mIsRecording) {
-					isRecording = mIsRecording;
+                    if (!mIsRecording)
+                        break;
 				}
 			}
 
@@ -458,7 +454,7 @@ public class LoggerActivity extends Activity {
 
 		super.onResume();
 
-		setupSensors();
+        initSensors();
 
 		NetworkHelper.startConfiguration(getApplicationContext());
 
@@ -469,7 +465,7 @@ public class LoggerActivity extends Activity {
 		mRemoteControl.start();
 	}
 
-	@Override
+    @Override
 	protected void onPause() {
 		Log.i(TAG, "onPause");
 
@@ -480,8 +476,15 @@ public class LoggerActivity extends Activity {
 			mSensorManager.unregisterListener(mSensorEventListener, s);
 		}
 
-		// Does the gps cleanup/file closing
-		cleanup();
+        // Does the gps cleanup/file closing
+        mGpsManager.shutdown();
+        cleanupEmptyFiles();
+
+        synchronized (mIsRecording) {
+            if (mIsRecording)
+                stopRecording();
+        }
+        mCameraView.release();
 
 		// Unregister battery
 		unregisterReceiver(batteryBroadcastReceiver);
@@ -492,8 +495,6 @@ public class LoggerActivity extends Activity {
 		// Stop the remote commanding
 		mRemoteControl.shutdown();
 		mRemoteControl = null;
-
-		Log.i("LoggerActivity", "onPause finished.");
 	}
 
 	@Override
@@ -511,12 +512,12 @@ public class LoggerActivity extends Activity {
 		}
 		final ProgressDialog progressDialog = new ProgressDialog(this);
 		progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-		progressDialog.setCancelable(false);
+        progressDialog.setCancelable(false);
 
 		// The setMessage call must be in both onCreateDialog and
 		// onPrepareDialog otherwise it will
 		// fail to update the dialog in onPrepareDialog.
-		progressDialog.setMessage("Processing...");
+        progressDialog.setMessage("Processing...");
 
 		return progressDialog;
 	}
@@ -568,7 +569,7 @@ public class LoggerActivity extends Activity {
 				// TODO: Need to deal with empty directories that are created if
 				// another recording
 				// session is never started.
-				initSensorLogFiles();
+				createSensorLogFiles();
 
 				try {
                     mRemoteControl.broadcastMessage("*** Packaging Finished: OK to start ***\n");
@@ -593,83 +594,85 @@ public class LoggerActivity extends Activity {
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if (keyCode == KeyEvent.KEYCODE_BACK) {
 			synchronized (mIsRecording) {
-                return true;
+                if (mIsRecording)
+                    return true;
 			}
 		}
 		return super.onKeyDown(keyCode, event);
 	}
 
-	private void setupSensors() {
-		// initSensorUi();
-		mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-		mSensors = mSensorManager.getSensorList(Sensor.TYPE_ALL);
-		initSensorLogFiles();
-		// initBattery(); // *Note* This function deals with UI, not actual
-		// readings.
-		registerBattery(); // This is the actual function that deals with
-							// receivers.
-		initGps();
-		initWifi();
+	private void createSensorLogFiles() {
+        mApp.generateNewFilePathUniqueIdentifier();
+        mApp.createDirectoryIfNotExisted(mApp.getDataLoggerPath());
 
-		printSensors();
-	}
+		mSensorLogFileWriters = new HashMap<String, BufferedWriter>();
 
-	private void initSensorUi() {
-		mAccelXTextView = (TextView) findViewById(R.id.accelerometerX_text);
-		mAccelYTextView = (TextView) findViewById(R.id.accelerometerY_text);
-		mAccelZTextView = (TextView) findViewById(R.id.accelerometerZ_text);
-
-		mGyroXTextView = (TextView) findViewById(R.id.gyroX_text);
-		mGyroYTextView = (TextView) findViewById(R.id.gyroY_text);
-		mGyroZTextView = (TextView) findViewById(R.id.gyroZ_text);
-
-		mMagXTextView = (TextView) findViewById(R.id.magneticFieldX_text);
-		mMagYTextView = (TextView) findViewById(R.id.magneticFieldY_text);
-		mMagZTextView = (TextView) findViewById(R.id.magneticFieldZ_text);
-
-		initBattery();
-	}
-
-	private void initSensorLogFiles() {
-		sensorLogFileWriters = new HashMap<String, BufferedWriter>();
-
-		String directoryName = mApp.getDataLoggerPath();
-		File directory = new File(directoryName);
-		if (!directory.exists() && !directory.mkdirs()) {
-			try {
-				throw new IOException("Path to file could not be created. " + directory.getAbsolutePath());
-			} catch (IOException e) {
-				Log.e(TAG, "Directory could not be created. " + e.toString());
-			}
-		}
-
-		for (int i = 0; i < mSensors.size(); i++) {
-			Sensor s = mSensors.get(i);
-			String sensorFilename = directoryName + s.getName().replaceAll(" ", "_") + "_"
-					+ mApp.getFilePathUniqueIdentifier() + ".txt";
-			File file = new File(sensorFilename);
-			try {
-				BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-				sensorLogFileWriters.put(s.getName(), writer);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			mSensorManager.registerListener(mSensorEventListener, s, SensorManager.SENSOR_DELAY_GAME);
-		}
+		for (Sensor s : mSensors)
+            createBufferedWriter(s.getName());
 
 		// The battery is a special case since it is not a real sensor
-		mBatteryTempWriter = createBufferedWriter("/BatteryTemp_", directoryName);
-		mBatteryLevelWriter = createBufferedWriter("/BatteryLevel_", directoryName);
-		mBatteryVoltageWriter = createBufferedWriter("/BatteryVoltage_", directoryName);
+		mBatteryTempWriter = createBufferedWriter("BatteryTemp");
+		mBatteryLevelWriter = createBufferedWriter("BatteryLevel");
+		mBatteryVoltageWriter = createBufferedWriter("BatteryVoltage");
 
 		// GPS is another special case since it is not a real sensor
-		mGpsLocationWriter = createBufferedWriter("/GpsLocation_", directoryName);
-		mGpsStatusWriter = createBufferedWriter("/GpsStatus_", directoryName);
-		mGpsNmeaWriter = createBufferedWriter("/GpsNmea_", directoryName);
+		mGpsLocationWriter = createBufferedWriter("GpsLocation");
+		mGpsStatusWriter = createBufferedWriter("GpsStatus");
+		mGpsNmeaWriter = createBufferedWriter("GpsNmea");
 
 		// Wifi is another special case
-		mWifiWriter = createBufferedWriter("/Wifi_", directoryName);
+		mWifiWriter = createBufferedWriter("Wifi");
 	}
+
+    private void closeSensorLogFiles() {
+        try {
+            Collection<BufferedWriter> writers = mSensorLogFileWriters.values();
+            for (BufferedWriter w : writers)
+                w.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void startRecording() {
+        createSensorLogFiles();
+
+        mStartRecTime = System.currentTimeMillis();
+        new Thread(updateRecTimeDisplay).start();
+        if ((mMode == MODE_VIDEO_FRONT) || (mMode == MODE_VIDEO_BACK)) {
+            try {
+                mCameraView.recordVideo(mApp.getVideoFilepath());
+                mRemoteControl.broadcastMessage("*** Recording Started ***\n");
+            } catch (Exception e) {
+                Log.e(TAG, "Recording has failed...", e);
+                Toast.makeText(getApplicationContext(),
+                        "Camera hardware error. Please restart the application.", Toast.LENGTH_LONG)
+                        .show();
+                finish();
+            }
+        } else {
+            try {
+                mCameraView.takePictures(mDelay);
+                mRemoteControl.broadcastMessage("*** Recording Started ***\n");
+            } catch (Exception e) {
+                Log.e(TAG, "Taking pictures has failed...", e);
+                Toast.makeText(getApplicationContext(),
+                        "Taking pictures is not possible at the moment: " + e.toString(),
+                        Toast.LENGTH_SHORT).show();
+            }
+        }
+        mIsRecording = true;
+    }
+
+    private void stopRecording() {
+        mCameraView.stopRecording();
+        mIsRecording = false;
+        mStartRecTime = 0;
+
+        closeSensorLogFiles();
+
+        mRemoteControl.broadcastMessage("*** Recording Stopped ***\n");
+    }
 
 	/**
 	 * Creates a new BufferedWriter.
@@ -679,17 +682,36 @@ public class LoggerActivity extends Activity {
 	 * @return A BufferedWriter for a file in the specified directory. Null if
 	 *         creation failed.
 	 */
-	private BufferedWriter createBufferedWriter(String prefix, String directoryName) {
-		String filename = directoryName + prefix + mApp.getFilePathUniqueIdentifier() + ".txt";
+	private BufferedWriter createBufferedWriter(String prefix) {
+		String filename = mApp.generateDataFilePath(prefix);
 		File file = new File(filename);
-		BufferedWriter bufferedWriter = null;
 		try {
-			bufferedWriter = new BufferedWriter(new FileWriter(file));
+			BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+            mSensorLogFileWriters.put(prefix, writer);
+            return writer;
 		} catch (IOException e) {
 			e.printStackTrace();
+            return null;
 		}
-		return bufferedWriter;
 	}
+
+    private void initSensorUi() {
+        mAccelXTextView = (TextView) findViewById(R.id.accelerometerX_text);
+        mAccelYTextView = (TextView) findViewById(R.id.accelerometerY_text);
+        mAccelZTextView = (TextView) findViewById(R.id.accelerometerZ_text);
+
+        mGyroXTextView = (TextView) findViewById(R.id.gyroX_text);
+        mGyroYTextView = (TextView) findViewById(R.id.gyroY_text);
+        mGyroZTextView = (TextView) findViewById(R.id.gyroZ_text);
+
+        mMagXTextView = (TextView) findViewById(R.id.magneticFieldX_text);
+        mMagYTextView = (TextView) findViewById(R.id.magneticFieldY_text);
+        mMagZTextView = (TextView) findViewById(R.id.magneticFieldZ_text);
+
+        mBatteryTempBarImageView = (BarImageView) findViewById(R.id.temperature_barImageView);
+        mBatteryTempTextView = (TextView) findViewById(R.id.batteryTemp_text);
+        mBatteryTempSpacerTextView = (TextView) findViewById(R.id.batteryTemp_text_spacer);
+    }
 
 	private void updateSensorUi(int sensorType, int accuracy, float[] values) {
 		// IMPORTANT: DO NOT UPDATE THE CONTENTS INSIDE A DRAWER IF IT IS BEING
@@ -701,6 +723,7 @@ public class LoggerActivity extends Activity {
 		if (mDataDrawer.isMoving()) {
 			return;
 		}
+
 		TextView xTextView;
 		TextView yTextView;
 		TextView zTextView;
@@ -745,6 +768,18 @@ public class LoggerActivity extends Activity {
 		zTextView.setText(prefix + numberDisplayFormatter(values[2]));
 	}
 
+    private void initSensors() {
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        mSensors = mSensorManager.getSensorList(Sensor.TYPE_ALL);
+        for (Sensor s : mSensors) {
+            Log.d(TAG, "Setup sensor: " + s.getName());
+            mSensorManager.registerListener(mSensorEventListener, s, SensorManager.SENSOR_DELAY_GAME);
+        }
+        initBattery();
+        initGps();
+        initWifi();
+    }
+
 	private void initGps() {
 		mGpsManager = new GpsManager(this, new GpsManagerListener() {
 
@@ -756,13 +791,13 @@ public class LoggerActivity extends Activity {
 						return;
 				}
 
-				try {
-					mGpsLocationView.setText("Lat: " + latitude + "\nLon: " + longitude);
-					mGpsLocationWriter.write(time + "," + accuracy + "," + latitude + "," + longitude + "," + altitude
-							+ "," + bearing + "," + speed + "\n");
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+                try {
+                    mGpsLocationView.setText("Lat: " + latitude + "\nLon: " + longitude);
+                    mGpsLocationWriter.write(time + "," + accuracy + "," + latitude + "," + longitude + "," + altitude
+                            + "," + bearing + "," + speed + "\n");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
 			}
 
 			@Override
@@ -787,8 +822,7 @@ public class LoggerActivity extends Activity {
 				}
 
 				try {
-					mGpsStatusWriter
-							.write(time + "," + maxSatellites + "," + actualSatellites + "," + timeToFirstFix + "\n");
+					mGpsStatusWriter.write(time + "," + maxSatellites + "," + actualSatellites + "," + timeToFirstFix + "\n");
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -797,76 +831,24 @@ public class LoggerActivity extends Activity {
 		});
 	}
 
-	private void initBattery() {
-		// Battery isn't a regular sensor; instead we have to use a Broadcast
-		// receiver.
-		//
-		// We always write this file since the battery changed event isn't
-		// called that often; otherwise, we might miss the initial battery
-		// reading.
-		//
-		// Note that we are reading the current time in MILLISECONDS for this,
-		// as opposed to NANOSECONDS for regular mSensors.
-		mBatteryTempBarImageView = (BarImageView) findViewById(R.id.temperature_barImageView);
-		mBatteryTempTextView = (TextView) findViewById(R.id.batteryTemp_text);
-		mBatteryTempSpacerTextView = (TextView) findViewById(R.id.batteryTemp_text_spacer);
-	}
-
 	private void initWifi() {
 		if (mWapManager == null)
 			mWapManager = new WapManager(getApplicationContext(), mWifiListener);
-		mWapManager.registerReceiver();
+        mWapManager.registerReceiver();
 	}
 
-	private void registerBattery() {
+	private void initBattery() {
+        // Battery isn't a regular sensor; instead we have to use a Broadcast
+        // receiver.
+        //
+        // We always write this file since the battery changed event isn't
+        // called that often; otherwise, we might miss the initial battery
+        // reading.
+        //
+        // Note that we are reading the current time in MILLISECONDS for this,
+        // as opposed to NANOSECONDS for regular mSensors.
 		IntentFilter batteryFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-		registerReceiver(batteryBroadcastReceiver, batteryFilter);
-	}
-
-	/**
-	 * Prints all the mSensors to LogCat.
-	 */
-	private void printSensors() {
-		List<Sensor> sensors = mSensorManager.getSensorList(Sensor.TYPE_ALL);
-		for (int i = 0; i < sensors.size(); i++) {
-			Sensor s = sensors.get(i);
-			Log.d("DEBUG", s.getName());
-		}
-		Log.d("DEBUG", "Also logging wifi. You're welcome.");
-	}
-
-	private void closeFiles() {
-		try {
-			Collection<BufferedWriter> writers = sensorLogFileWriters.values();
-			BufferedWriter[] w = new BufferedWriter[0];
-			w = writers.toArray(w);
-			for (int i = 0; i < w.length; i++) {
-				w.clone();
-			}
-			if (mBatteryTempWriter != null) {
-				mBatteryTempWriter.close();
-			}
-			if (mBatteryLevelWriter != null) {
-				mBatteryLevelWriter.close();
-			}
-			if (mBatteryVoltageWriter != null) {
-				mBatteryVoltageWriter.close();
-			}
-			if (mGpsLocationWriter != null) {
-				mGpsLocationWriter.close();
-			}
-			if (mGpsStatusWriter != null) {
-				mGpsStatusWriter.close();
-			}
-			if (mGpsNmeaWriter != null) {
-				mGpsNmeaWriter.close();
-			}
-			if (mWifiWriter != null) {
-				mWifiWriter.close();
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+        registerReceiver(batteryBroadcastReceiver, batteryFilter);
 	}
 
 	private String numberDisplayFormatter(float value) {
@@ -881,51 +863,6 @@ public class LoggerActivity extends Activity {
 			displayedText = displayedText + " ";
 		}
 		return displayedText;
-	}
-
-    private void startRecording() {
-        mIsRecording = true;
-        mStartRecTime = System.currentTimeMillis();
-        new Thread(updateRecTimeDisplay).start();
-        if ((mMode == MODE_VIDEO_FRONT) || (mMode == MODE_VIDEO_BACK)) {
-            try {
-                mCameraView.recordVideo();
-                mRemoteControl.broadcastMessage("*** Recording Started ***\n");
-            } catch (Exception e) {
-                Log.e(TAG, "Recording has failed...", e);
-                Toast.makeText(getApplicationContext(),
-                        "Camera hardware error. Please restart the application.", Toast.LENGTH_LONG)
-                        .show();
-                finish();
-            }
-        } else {
-            try {
-                mCameraView.takePictures(mDelay);
-            } catch (Exception e) {
-                Log.e(TAG, "Taking pictures has failed...", e);
-                Toast.makeText(getApplicationContext(),
-                        "Taking pictures is not possible at the moment: " + e.toString(),
-                        Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-
-	private void stopRecording() {
-        mIsRecording = false;
-        mGpsManager.shutdown();
-        mCameraView.stopRecording();
-        mStartRecTime = 0;
-        closeFiles();
-        mRemoteControl.broadcastMessage("*** Recording Stopped ***\n");
-	}
-
-	private void cleanup() {
-        synchronized (mIsRecording) {
-            if (mIsRecording)
-                stopRecording();
-        }
-		cleanupEmptyFiles();
-		mCameraView.release();
 	}
 
 	private void cleanupEmptyFiles() {

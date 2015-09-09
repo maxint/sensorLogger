@@ -6,15 +6,14 @@
 
     <View
         android:layout_width="wrap_content"
-        android:layout_height="10dip"
-        android:layout_weight="320"
+        android:layout_height="0dip"
+        android:layout_weight="1"
         android:background="#00FF0000" />
 
     <SlidingDrawer
         android:id="@+id/diagnosticsDrawer"
         android:layout_width="wrap_content"
-        android:layout_height="10dip"
-        android:layout_weight="685"
+        android:layout_height="385dip"
         android:background="#0000FF00"
         android:content="@+id/diagnosticsContentLayout"
         android:handle="@+id/diagnosticsHandleButton"
@@ -35,7 +34,7 @@
             android:orientation="horizontal" >
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="0dip"
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
 

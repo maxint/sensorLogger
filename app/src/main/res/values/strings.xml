@@ -4,4 +4,5 @@
     <string name="start_rec_time">00:00:00</string>
     <string name="record">Record</string>
     <string name="backplate">backplate</string>
+    <string name="NaN">NaN</string>
 </resources>

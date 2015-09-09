@@ -12,7 +12,6 @@ import android.hardware.SensorManager;
 import android.os.BatteryManager;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.util.Base64;
 import android.util.Log;
 
 import com.cellbots.logger.GpsManager;
@@ -21,7 +20,6 @@ import com.cellbots.logger.WapManager;
 import com.cellbots.logger.GpsManager.GpsManagerListener;
 import com.cellbots.logger.WapManager.ScanResults;
 import com.cellbots.logger.localServer.LocalHttpServer.HttpCommandServerListener;
-import com.cellbots.logger.localServer.Telemetry.DataPacket.Builder;
 import com.cellbots.logger.localServer.XmppManager.XmppMessageListener;
 
 import org.json.JSONException;
@@ -53,7 +51,7 @@ public class LoggingService extends Service implements HttpCommandServerListener
 
     private static final String TAG = "LoggingService";
 
-    private LoggerApplication application;
+    private LoggerApplication mApp;
 
     // FLAGS
     // TODO: Make these configurable!
@@ -69,7 +67,7 @@ public class LoggingService extends Service implements HttpCommandServerListener
     private BufferedWriter mBatteryLevelWriter;
     private BufferedWriter mBatteryVoltageWriter;
     private BufferedWriter mWifiWriter;
-    private HashMap<String, BufferedWriter> sensorLogFileWriters;
+    private HashMap<String, BufferedWriter> mSensorLogFileWriters;
     private HashMap<String, String> lastSeenValues;
     private BufferedWriter mGpsLocationWriter;
     private BufferedWriter mGpsStatusWriter;
@@ -81,13 +79,10 @@ public class LoggingService extends Service implements HttpCommandServerListener
     private long mLastXmppUpdateTime = 0;
     private TelemetrySnapshot mTelemetrySnapshot;
 
-    private String mDirectoryName;
-
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
-        application = (LoggerApplication) getApplication();
-        mDirectoryName = application.getDataLoggerPath();
+        mApp = (LoggerApplication) getApplication();
         if (intent != null) {
             switch (intent.getIntExtra(EXTRA_COMMAND, EXTRA_COMMAND_STOP)) {
                 case EXTRA_COMMAND_START:
@@ -183,7 +178,7 @@ public class LoggingService extends Service implements HttpCommandServerListener
                             + valuesStr;
                     lastSeenValues.put(sensorName, lastSeenValue);
                     // Log.d(TAG, sensorName + ":" + lastSeenValue);
-                    BufferedWriter writer = sensorLogFileWriters.get(sensorName);
+                    BufferedWriter writer = mSensorLogFileWriters.get(sensorName);
                     if (writer != null) {
                         try {
                             writer.write(lastSeenValue + "\n");
@@ -281,54 +276,19 @@ public class LoggingService extends Service implements HttpCommandServerListener
     };
 
     private void initSensorLogFiles() {
-        sensorLogFileWriters = new HashMap<String, BufferedWriter>();
+        mSensorLogFileWriters = new HashMap<String, BufferedWriter>();
 
         if (mWriteToFile) {
-            File directory = new File(mDirectoryName);
-            if (!directory.exists() && !directory.mkdirs()) {
-                try {
-                    throw new IOException(
-                            "Path to file could not be created. " + directory.getAbsolutePath());
-                } catch (IOException e) {
-                    Log.e(TAG, "Directory could not be created. " + e.toString());
-                }
+            mApp.createDirectoryIfNotExisted(mApp.getDataLoggerPath());
+            for (Sensor s : sensors) {
+                createBufferedWriter(s.getName());
+                mSensorManager.registerListener(mSensorEventListener, s, SensorManager.SENSOR_DELAY_GAME);
             }
+            // GPS is another special case since it is not a real sensor
+            mGpsLocationWriter = createBufferedWriter("GpsLocation");
+            mGpsStatusWriter = createBufferedWriter("GpsStatus");
+            mGpsNmeaWriter = createBufferedWriter("GpsNmea");
         }
-
-        for (int i = 0; i < sensors.size(); i++) {
-            Sensor s = sensors.get(i);
-            if (mWriteToFile) {
-                String sensorFilename = mDirectoryName + s.getName().replaceAll(" ", "_") + "_"
-                        + application.getFilePathUniqueIdentifier() + ".txt";
-                File file = new File(sensorFilename);
-                try {
-                    BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-                    sensorLogFileWriters.put(s.getName(), writer);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                // GPS is another special case since it is not a real sensor
-                mGpsLocationWriter = createBufferedWriter("/GpsLocation_", mDirectoryName);
-                mGpsStatusWriter = createBufferedWriter("/GpsStatus_", mDirectoryName);
-                mGpsNmeaWriter = createBufferedWriter("/GpsNmea_", mDirectoryName);
-            }
-            mSensorManager.registerListener(
-                    mSensorEventListener, s, SensorManager.SENSOR_DELAY_GAME);
-        }
-        /*
-         * // The battery is a special case since it is not a real sensor
-         * mBatteryTempWriter = createBufferedWriter("/BatteryTemp_",
-         * directoryName); mBatteryLevelWriter =
-         * createBufferedWriter("/BatteryLevel_", directoryName);
-         * mBatteryVoltageWriter = createBufferedWriter("/BatteryVoltage_",
-         * directoryName); // GPS is another special case since it is not a real
-         * sensor mGpsLocationWriter = createBufferedWriter("/GpsLocation_",
-         * directoryName); mGpsStatusWriter =
-         * createBufferedWriter("/GpsStatus_", directoryName); mGpsNmeaWriter =
-         * createBufferedWriter("/GpsNmea_", directoryName); // Wifi is another
-         * special case mWifiWriter = createBufferedWriter("/Wifi_",
-         * directoryName);
-         */
     }
 
     /**
@@ -338,17 +298,17 @@ public class LoggingService extends Service implements HttpCommandServerListener
      * @return A BufferedWriter for a file in the specified directory. Null if
      *         creation failed.
      */
-    private BufferedWriter createBufferedWriter(String prefix, String directoryName) {
-        String filename = directoryName + prefix + application.getFilePathUniqueIdentifier()
-                + ".txt";
+    private BufferedWriter createBufferedWriter(String prefix) {
+        String filename = mApp.generateDataFilePath(prefix);
         File file = new File(filename);
-        BufferedWriter bufferedWriter = null;
+        BufferedWriter writer = null;
         try {
-            bufferedWriter = new BufferedWriter(new FileWriter(file));
+            writer = new BufferedWriter(new FileWriter(file));
+            mSensorLogFileWriters.put(prefix, writer);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return bufferedWriter;
+        return writer;
     }
 
     private void initGps() {
@@ -425,17 +385,9 @@ public class LoggingService extends Service implements HttpCommandServerListener
     public void addLogEntryToCustomSensor(final String sensorName, final String sensorReadings) {
         final String lastSeenValue = System.currentTimeMillis() + "," + sensorReadings;
         lastSeenValues.put(sensorName, lastSeenValue);
-        BufferedWriter writer = sensorLogFileWriters.get(sensorName);
+        BufferedWriter writer = mSensorLogFileWriters.get(sensorName);
         if (mWriteToFile && (writer == null)) {
-            String sensorFilename = mDirectoryName + sensorName + "_"
-                    + application.getFilePathUniqueIdentifier() + ".txt";
-            File file = new File(sensorFilename);
-            try {
-                writer = new BufferedWriter(new FileWriter(file));
-                sensorLogFileWriters.put(sensorName, writer);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            writer = createBufferedWriter(sensorName);
         }
         if (writer != null) {
             try {

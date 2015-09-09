@@ -95,10 +95,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 		if (mTakingPictures)
 			return;
 
-		File dir = new File(mApp.getPicturesDirectoryPath());
-		if (!dir.exists()) {
-			dir.mkdirs();
-		}
+        mApp.createDirectoryIfNotExisted(mApp.getPicturesDirectoryPath());
 
 		mDelay = delay;
 		mTakingPictures = true;
@@ -106,41 +103,26 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 	}
 
 	private MediaRecorder mVideoRecorder = null;
-	private FileOutputStream mOutputStream = null;
+    private boolean mIsRecordingVideo = false;
 
 	/**
 	 * Record camera preview.
 	 */
-	public void recordVideo() {
-		if (mVideoRecorder == null)
-			mVideoRecorder = createVideoRecorder();
-
-		String path = mApp.getVideoFilepath();
-		Log.i(TAG, "Video file to use: " + path);
-
-		final File directory = new File(path).getParentFile();
-		if (!directory.exists() && !directory.mkdirs()) {
-			Log.e(TAG, "Path to file could not be created. " + directory.getAbsolutePath());
-		}
-
-		Size previewSize = mCamera.getParameters().getPreviewSize();
-		mCamera.unlock();
-
+	public void recordVideo(String path) {
 		try {
-			mOutputStream = new FileOutputStream(path);
-			mVideoRecorder.setCamera(mCamera);
-			mVideoRecorder.setOutputFile(mOutputStream.getFD());
-			mVideoRecorder.setVideoSize(previewSize.width, previewSize.height);
-			mVideoRecorder.setVideoFrameRate(20);
-			mVideoRecorder.setPreviewDisplay(getHolder().getSurface());
+            mCamera.stopPreview();
+            mVideoRecorder = createVideoRecorder();
+            mVideoRecorder.setOutputFile(path);
 			mVideoRecorder.prepare();
+            mVideoRecorder.start();
+            mIsRecordingVideo = true;
 		} catch (IllegalStateException e) {
-			Log.e(TAG, e.toString(), e);
+            Log.e(TAG, e.toString(), e);
 		} catch (IOException e) {
-			Log.e(TAG, e.toString(), e);
-		}
-
-		mVideoRecorder.start();
+            Log.e(TAG, e.toString(), e);
+		} catch (RuntimeException e) {
+            Log.e(TAG, e.toString(), e);
+        }
 	}
 
 	/**
@@ -148,9 +130,21 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 	 */
 	public void stopRecording() {
 		mTakingPictures = false;
-		if (mVideoRecorder != null) {
-			mVideoRecorder.stop();
-			mCamera.lock();
+		if (mIsRecordingVideo) {
+            mVideoRecorder.stop();
+            try {
+                mCamera.setPreviewDisplay(getHolder());
+                mCamera.setDisplayOrientation(CAMERA_ORIENTATION_DEGREES);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            mCamera.startPreview();
+            mIsRecordingVideo = false;
+        }
+        if (mVideoRecorder != null) {
+            mVideoRecorder.reset();
+            mVideoRecorder.release();
+            mVideoRecorder = null;
 		}
 	}
 
@@ -158,26 +152,16 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 	 * Release resources (camera, file stream and recorder).
 	 */
 	public void release() {
-		if (mVideoRecorder != null) {
-			mVideoRecorder.reset();
-			mVideoRecorder.release();
-			mVideoRecorder = null;
-		}
-
-		if (mOutputStream != null) {
-			try {
-				mOutputStream.close();
-				mOutputStream = null;
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-
 		if (mCamera != null) {
 			mCamera.stopPreview();
 			mCamera.release();
 			mCamera = null;
 		}
+        if (mVideoRecorder != null) {
+            mVideoRecorder.reset();
+            mVideoRecorder.release();
+            mVideoRecorder = null;
+        }
 	}
 
 	public int getPictureCount() {
@@ -223,28 +207,38 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 	private MediaRecorder createVideoRecorder() {
 		MediaRecorder recorder = new MediaRecorder();
 		recorder.setOnErrorListener(new MediaRecorder.OnErrorListener() {
-			@Override
-			public void onError(MediaRecorder mr, int what, int extra) {
-				Log.e(TAG, "Error received in media recorder: " + what + ", " + extra);
-			}
-		});
+            @Override
+            public void onError(MediaRecorder mr, int what, int extra) {
+                Log.e(TAG, "Error received in media recorder: " + what + ", " + extra);
+            }
+        });
 		recorder.setOnInfoListener(new MediaRecorder.OnInfoListener() {
-			@Override
-			public void onInfo(MediaRecorder mr, int what, int extra) {
-				Log.e(TAG, "Info received from media recorder: " + what + ", " + extra);
-			}
-		});
+            @Override
+            public void onInfo(MediaRecorder mr, int what, int extra) {
+                Log.e(TAG, "Info received from media recorder: " + what + ", " + extra);
+            }
+        });
+
+        Size previewSize = mCamera.getParameters().getPreviewSize();
+        Log.d(TAG, "Preview size: " + previewSize.width + "x" + previewSize.height);
+
+        // attach camera to recorder
+        mCamera.unlock();
+        recorder.setCamera(mCamera);
 
 		try {
-			recorder.setOrientationHint(CAMERA_ORIENTATION_DEGREES);
+			//recorder.setOrientationHint(CAMERA_ORIENTATION_DEGREES);
 		} catch (NoSuchMethodError e) {
 			// Method call not available below API level 9. The recorded
 			// video will be rotated.
-			e.printStackTrace();
+            e.printStackTrace();
 		}
 		recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-		recorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
-		recorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH));
+        recorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+        recorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH));
+
+        //recorder.setVideoSize(previewSize.width, previewSize.height);
+        //recorder.setVideoFrameRate(20);
 
 		return recorder;
 	}
