@@ -786,13 +786,15 @@ public class LoggerActivity extends Activity {
 			@Override
 			public void onGpsLocationUpdate(long time, float accuracy, double latitude, double longitude,
 					double altitude, float bearing, float speed) {
+
+                mGpsLocationView.setText("Lat: " + latitude + "\nLon: " + longitude);
+
 				synchronized (mIsRecording) {
 					if (!mIsRecording)
 						return;
 				}
 
                 try {
-                    mGpsLocationView.setText("Lat: " + latitude + "\nLon: " + longitude);
                     mGpsLocationWriter.write(time + "," + accuracy + "," + latitude + "," + longitude + "," + altitude
                             + "," + bearing + "," + speed + "\n");
                 } catch (IOException e) {
@@ -826,7 +828,6 @@ public class LoggerActivity extends Activity {
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
-
 			}
 		});
 	}
