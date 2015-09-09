@@ -358,7 +358,6 @@ public class LocalHttpServer {
                 }
             }
         }
-
     }
 
     /**
@@ -398,5 +397,4 @@ public class LocalHttpServer {
         }
         return ipAddresses;
     }
-
 }

@@ -19,7 +19,6 @@ import com.cellbots.logger.R;
  * @author clchen@google.com (Charles L. Chen)
  */
 public class ServerControlActivity extends Activity {
-    private TextView ipAddressesView;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -27,23 +26,22 @@ public class ServerControlActivity extends Activity {
 
         setContentView(R.layout.server_control);
 
-        ipAddressesView = (TextView) findViewById(R.id.serverIpAddressesTextView);
+        final TextView ipAddressesView = (TextView) findViewById(R.id.serverIpAddressesTextView);
 
-        Button startButton = (Button) findViewById(R.id.serverStartButton);
+        final Button startButton = (Button) findViewById(R.id.serverStartButton);
         startButton.setOnClickListener(new OnClickListener() {
-                @Override
+            @Override
             public void onClick(View v) {
                 Intent i = new Intent(ServerControlActivity.this, LoggingService.class);
                 i.putExtra(LoggingService.EXTRA_COMMAND, LoggingService.EXTRA_COMMAND_START);
                 startService(i);
-                ipAddressesView.setText(
-                        "Server Address:\n" + LocalHttpServer.getLocalIpAddresses());
+                ipAddressesView.setText("Server Address:\n" + LocalHttpServer.getLocalIpAddresses());
             }
         });
 
-        Button stopButton = (Button) findViewById(R.id.serverStopButton);
+        final Button stopButton = (Button) findViewById(R.id.serverStopButton);
         stopButton.setOnClickListener(new OnClickListener() {
-                @Override
+            @Override
             public void onClick(View v) {
                 Intent i = new Intent(ServerControlActivity.this, LoggingService.class);
                 i.putExtra(LoggingService.EXTRA_COMMAND, LoggingService.EXTRA_COMMAND_STOP);
@@ -52,5 +50,4 @@ public class ServerControlActivity extends Activity {
             }
         });
     }
-
 }

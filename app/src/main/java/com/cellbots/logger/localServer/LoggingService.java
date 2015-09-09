@@ -198,7 +198,7 @@ public class LoggingService extends Service implements HttpCommandServerListener
             }
         }
 
-            @Override
+        @Override
         public void onAccuracyChanged(Sensor sensor, int accuracy) {
         }
     };
