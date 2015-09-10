@@ -97,6 +97,7 @@ public class LoggerActivity extends Activity {
 	/*
 	 * App state
 	 */
+
 	private int mMode;
 	private volatile Boolean mIsRecording;
 	private boolean mUseZip;
@@ -321,10 +322,14 @@ public class LoggerActivity extends Activity {
 						else
 							mFlashingRecGroup.setVisibility(View.VISIBLE);
 
-						if (mMode == MODE_PICTURES)
-							mRecordInfo.setText("Pictures taken: " + mCameraView.getPictureCount());
-						else
-							mRecordInfo.setText(DateUtils.formatElapsedTime((System.currentTimeMillis() - mStartRecTime) / 1000));
+                        String info = "";
+						if (mMode == MODE_PICTURES) {
+                            info += "Pictures taken: " + mCameraView.getPictureCount() + " / ";
+                            info += mDelay - (((System.currentTimeMillis() - mStartRecTime) / 1000) % mDelay);
+                        } else {
+                            info += DateUtils.formatElapsedTime((System.currentTimeMillis() - mStartRecTime) / 1000);
+                        }
+						mRecordInfo.setText(info);
 
 						mStorageBarImageView.setPercentage(percentage);
 						mStorageTextView = (TextView) findViewById(R.id.storage_text);
@@ -384,7 +389,7 @@ public class LoggerActivity extends Activity {
 
         mCameraView.selectCamera(camID, width, height);
 		if (mMode == MODE_PICTURES) {
-			mDelay = Math.max(0, getIntent().getIntExtra(EXTRA_PICTURE_DELAY, 30) * 1000);
+			mDelay = Math.max(0, getIntent().getIntExtra(EXTRA_PICTURE_DELAY, 30));
 			mCameraView = (CameraPreview) findViewById(R.id.surface);
 		}
 
@@ -661,7 +666,7 @@ public class LoggerActivity extends Activity {
             }
         } else {
             try {
-                mCameraView.takePictures(mDelay);
+                mCameraView.takePictures(mDelay * 1000);
                 mRemoteControl.broadcastMessage("*** Recording Started ***\n");
             } catch (Exception e) {
                 Log.e(TAG, "Taking pictures has failed...", e);
