@@ -324,8 +324,8 @@ public class LoggerActivity extends Activity {
 
                         String info = "";
 						if (mMode == MODE_PICTURES) {
-                            info += "Pictures taken: " + mCameraView.getPictureCount() + " / ";
-                            info += mDelay - (((System.currentTimeMillis() - mStartRecTime) / 1000) % mDelay);
+                            info += "Pictures taken: " + mCameraView.getPictureCount() + " | ";
+                            info += (mDelay - (((System.currentTimeMillis() - mStartRecTime) / 1000) % mDelay));
                         } else {
                             info += DateUtils.formatElapsedTime((System.currentTimeMillis() - mStartRecTime) / 1000);
                         }

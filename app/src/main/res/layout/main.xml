@@ -19,7 +19,7 @@
         <TextView
             style="@style/horizontal"
             android:layout_marginTop="20dip"
-            android:layout_marginBottom="20dip" />
+            android:layout_marginBottom="10dip" />
 
         <Button
             android:id="@+id/launchLocalServer"
@@ -113,9 +113,8 @@
             android:orientation="horizontal" >
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Delay between shots (seconds):" />
+                android:text="Delay between shots (seconds):"
+                style="@style/tabelLabel" />
 
             <EditText
                 android:id="@+id/pictureDelay"
@@ -125,11 +124,6 @@
                 android:inputType="number"
                 android:text="30" />
         </LinearLayout>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text=" " />
 
         <Button
             android:id="@+id/launchPicture"
