@@ -5,4 +5,11 @@
     <string name="record">Record</string>
     <string name="backplate">backplate</string>
     <string name="NaN">NaN</string>
+    <string name="camera_prompt">Select Camera</string>
+    <string name="video_res_prompt">Select Video Resolution</string>
+    <string name="picture_res_prompt">Select Picture Resolution</string>
+    <string-array name="camera_names">
+        <item>Back camera</item>
+        <item>Front camera</item>
+    </string-array>
 </resources>

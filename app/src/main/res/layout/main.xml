@@ -17,21 +17,9 @@
             android:textSize="30sp" />
 
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text=" " />
-
-        <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:background="#FFFFFFFF"
-            android:text=" "
-            android:textSize="1dip" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text=" " />
+            style="@style/horizontal"
+            android:layout_marginTop="20dip"
+            android:layout_marginBottom="20dip" />
 
         <Button
             android:id="@+id/launchLocalServer"
@@ -40,72 +28,84 @@
             android:text="Local Server Controls" />
 
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text=" " />
+            style="@style/horizontal" />
 
         <TextView
+            android:text="Camera Settings"
+            style="@style/sectionTitle" />
+
+        <GridLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:background="#FFFFFFFF"
-            android:text=" "
-            android:textSize="1dip" />
+            android:columnCount="2"
+            android:rowCount="3">
+
+            <TextView
+                android:text="Use Camera:"
+                android:layout_row="0"
+                android:layout_column="0"
+                style="@style/tabelLabel" />
+
+            <TextView
+                android:text="Videw Resolution:"
+                android:layout_row="1"
+                android:layout_column="0"
+                style="@style/tabelLabel" />
+
+            <TextView
+                android:text="Picture Resolution:"
+                android:layout_row="2"
+                android:layout_column="0"
+                style="@style/tabelLabel" />
+
+            <Spinner
+                android:id="@+id/camSpin"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:prompt="@string/camera_prompt"
+                android:spinnerMode="dialog"
+                android:layout_column="1"
+                android:layout_row="0" />
+
+            <Spinner
+                android:id="@+id/videoResSpin"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:prompt="@string/video_res_prompt"
+                android:spinnerMode="dialog"
+                android:layout_column="1"
+                android:layout_row="1" />
+
+            <Spinner
+                android:id="@+id/picResSpin"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:prompt="@string/picture_res_prompt"
+                android:spinnerMode="dialog"
+                android:layout_column="1"
+                android:layout_row="2" />
+
+        </GridLayout>
 
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text=" " />
+            style="@style/horizontal" />
 
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
             android:text="Record video"
-            android:textSize="20dip" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text=" " />
+            style="@style/sectionTitle" />
 
         <Button
-            android:id="@+id/launchVideoFront"
+            android:id="@+id/launchVideo"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="Use front camera" />
+            android:text="Record video" />
 
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text=" " />
-
-        <Button
-            android:id="@+id/launchVideoBack"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="Use back camera" />
+            style="@style/horizontal" />
 
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text=" " />
-
-        <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:background="#FFFFFFFF"
-            android:text=" "
-            android:textSize="1dip" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text=" " />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
             android:text="Take pictures"
-            android:textSize="20dip" />
+            style="@style/sectionTitle" />
 
         <LinearLayout
             android:layout_width="fill_parent"
@@ -135,24 +135,10 @@
             android:id="@+id/launchPicture"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="Use back camera" />
+            android:text="Take pictures" />
 
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text=" " />
-
-        <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:background="#FFFFFFFF"
-            android:text=" "
-            android:textSize="1dip" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text=" " />
+            style="@style/horizontal" />
 
         <CheckBox
             android:id="@+id/useZip"

@@ -16,7 +16,6 @@
 
 package com.cellbots.logger;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -44,6 +43,8 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 	private static final int CAMERA_ORIENTATION_DEGREES = 90;
 
 	private int mCameraID = CameraInfo.CAMERA_FACING_BACK;
+    private int mVideoWidth = 0;
+    private int mVideoHeight = 0;
 	private Camera mCamera;
 	private final LoggerApplication mApp;
 
@@ -54,8 +55,10 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 		getHolder().addCallback(this);
 	}
 
-	public void selectCamera(int id) {
+	public void selectCamera(int id, int width, int height) {
 		mCameraID = id;
+        mVideoWidth = width;
+        mVideoHeight = height;
 	}
 
 	@Override
@@ -65,12 +68,12 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 		mCamera = Camera.open(mCameraID);
 		try {
 			mCamera.setPreviewDisplay(holder);
+            Camera.Parameters params = mCamera.getParameters();
             if (mCameraID == CameraInfo.CAMERA_FACING_BACK) {
-                Camera.Parameters params = mCamera.getParameters();
                 params.setFocusMode(Camera.Parameters.FOCUS_MODE_INFINITY);
-                params.setPreviewSize(640, 480);
-                mCamera.setParameters(params);
             }
+            params.setPictureSize(mVideoWidth, mVideoHeight);
+            mCamera.setParameters(params);
             mCamera.setDisplayOrientation(CAMERA_ORIENTATION_DEGREES);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -103,8 +106,14 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
         mApp.createDirectoryIfNotExisted(mApp.getPicturesDirectoryPath());
 
+        // set picture size
+        Camera.Parameters params = mCamera.getParameters();
+        params.setPictureSize(mVideoWidth, mVideoHeight);
+        mCamera.setParameters(params);
+
 		mDelay = delay;
 		mTakingPictures = true;
+
 		runPictureTakingLoop();
 	}
 
@@ -241,9 +250,9 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 		}
 		recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         recorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
-        recorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH));
 
-        //recorder.setVideoSize(previewSize.width, previewSize.height);
+        recorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH));
+        recorder.setVideoSize(mVideoWidth, mVideoHeight);
         //recorder.setVideoFrameRate(20);
 
 		return recorder;

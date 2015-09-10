@@ -77,12 +77,15 @@ public class LoggerActivity extends Activity {
 	public static final String TAG = "LoggerActivity";
 
 	public static final String EXTRA_MODE = "MODE";
+    public static final String EXTRA_CAMERA = "CAMERA_ID";
+    public static final String EXTRA_CAMERA_RESOLUTION = "CAMERA_RESOLUTION";
 	public static final String EXTRA_PICTURE_DELAY = "PICTURE_DELAY";
 	public static final String EXTRA_USE_ZIP = "USE_ZIP";
 
-	public static final int MODE_VIDEO_FRONT = CameraInfo.CAMERA_FACING_FRONT;
-	public static final int MODE_VIDEO_BACK = CameraInfo.CAMERA_FACING_BACK;
-	public static final int MODE_PICTURES = 2;
+	public static final int CAMERA_VIDEO_FRONT = CameraInfo.CAMERA_FACING_FRONT;
+	public static final int CAMERA_VIDEO_BACK = CameraInfo.CAMERA_FACING_BACK;
+	public static final int MODE_PICTURES = 0;
+    public static final int MODE_VIDEO = 1;
 
 	private static final int UI_BAR_MAX_TOP_PADDING = 275;
 	private static final float TEMPERATURE_MAX = 500;
@@ -359,7 +362,7 @@ public class LoggerActivity extends Activity {
 
 		// Keep the screen on to make sure the phone stays awake.
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
-				WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		setContentView(R.layout.preview_mode);
 
 		mCameraView = (CameraPreview) findViewById(R.id.surface);
@@ -367,14 +370,20 @@ public class LoggerActivity extends Activity {
 		mGpsLocationView = (TextView) findViewById(R.id.gpsLocation);
 		mRecordInfo = (TextView) findViewById(R.id.recordInfo);
 
-		mMode = getIntent().getIntExtra(EXTRA_MODE, MODE_VIDEO_FRONT);
+		mMode = getIntent().getIntExtra(EXTRA_MODE, MODE_VIDEO);
 		mFlashingRecGroup.setVisibility(View.INVISIBLE);
 		mRecordInfo.setVisibility(View.INVISIBLE);
 
-		if ((mMode == MODE_VIDEO_FRONT) || (mMode == MODE_VIDEO_BACK)) {
-			mCameraView.selectCamera(mMode);
-		} else {
-			mCameraView.selectCamera(CameraInfo.CAMERA_FACING_BACK);
+        // camera id and resolution
+        int camID = getIntent().getIntExtra(EXTRA_CAMERA, CAMERA_VIDEO_BACK);
+        String camRes = getIntent().getStringExtra(EXTRA_CAMERA_RESOLUTION);
+        String camResDims[] = camRes.split("X");
+        if (camResDims.length != 2) throw new AssertionError();
+        int width = Integer.parseInt(camResDims[0]);
+        int height = Integer.parseInt(camResDims[1]);
+
+        mCameraView.selectCamera(camID, width, height);
+		if (mMode == MODE_PICTURES) {
 			mDelay = Math.max(0, getIntent().getIntExtra(EXTRA_PICTURE_DELAY, 30) * 1000);
 			mCameraView = (CameraPreview) findViewById(R.id.surface);
 		}
@@ -639,7 +648,7 @@ public class LoggerActivity extends Activity {
 
         mStartRecTime = System.currentTimeMillis();
         new Thread(updateRecTimeDisplay).start();
-        if ((mMode == MODE_VIDEO_FRONT) || (mMode == MODE_VIDEO_BACK)) {
+        if (mMode == MODE_VIDEO) {
             try {
                 mCameraView.recordVideo(mApp.getVideoFilepath());
                 mRemoteControl.broadcastMessage("*** Recording Started ***\n");
